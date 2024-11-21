@@ -1,0 +1,18 @@
+---
+packages_debian:
+  - tzdata
+  - dnsutils
+  - bash-completion
+  - unzip
+  - bzip2
+  - vim
+  - mlocate
+  - nfs-common
+packages_redhat:
+  - tzdata
+  - bind-utils
+  - unzip
+  - bzip2
+  - vim-enhanced
+  - mlocate
+  - nfs-utils

@@ -1,0 +1,9 @@
+---
+- name: Padroniza o arquivo /etc/hosts
+  ansible.builtin.import_tasks: hosts.yml
+
+- name: Instala pacotes base
+  ansible.builtin.import_tasks: packages.yml
+
+- name: Adiciona usuarios HelpDesk e DevOps
+  ansible.builtin.import_tasks: users.yml

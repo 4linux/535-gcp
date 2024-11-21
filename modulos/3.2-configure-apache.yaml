@@ -1,0 +1,57 @@
+---
+- name: Remove o arquivo index.html
+  when:
+    - ansible_os_family == "Debian"
+    - php_packages_ubuntu_installed is succeeded
+  ansible.builtin.file:
+    path: /var/www/html/index.html
+    state: absent
+- name: Define o arquivo de configuração para testar suporte PHP em Distribuições Debian/Ubuntu
+  when:
+    - ansible_os_family == "Debian"
+    - php_packages_ubuntu_installed is succeeded
+  ansible.builtin.copy: 
+    src: files/web/index.php
+    dest: /var/www/html/index.php
+    owner: www-data
+    group: www-data
+    mode: "0644"
+- name: Define o arquivo de configuração para testar o suporte PHP em Distribuições RedHat/CentOS
+  when:
+    - ansible_os_family == "RedHat"
+    - php_packages_centos_installed is succeeded
+  ansible.builtin.copy:
+    src: files/web/index.php
+    dest: /var/www/html/index.php
+    owner: apache
+    group: apache
+    mode: "0644"
+- name: Permitir que o Apache faça binding na porta padrão (80)
+  when:
+    - ansible_os_family == "RedHat"
+    - php_packages_centos_installed is succeeded
+  ansible.builtin.command:
+    cmd: setsebool -P httpd_can_network_connect 1
+
+- name: Configurar contexto de segurança do SELinux para diretórios de conteúdo do Apache
+  when:
+    - ansible_os_family == "RedHat"
+    - php_packages_centos_installed is succeeded
+  ansible.builtin.command:
+    cmd: semanage fcontext -a -t httpd_sys_content_t "/var/www/html(/.*)?"
+
+- name: Restaurar contexto de segurança no diretório de conteúdo
+  when:
+    - ansible_os_family == "RedHat"
+    - php_packages_centos_installed is succeeded
+  ansible.builtin.command:
+    cmd: restorecon -Rv /var/www/html
+
+- name: Garantir que o SELinux está permitindo conexões HTTP
+  when:
+    - ansible_os_family == "RedHat"
+    - php_packages_centos_installed is succeeded
+  ansible.builtin.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true

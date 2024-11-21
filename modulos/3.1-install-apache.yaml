@@ -1,0 +1,28 @@
+---
+- name: Instala pacotes para suporte a PHP no Apache em Distribuições Debian/Ubuntu
+  when: ansible_os_family == "Debian"
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: true
+  loop:
+    - apache2
+    - php7.4
+    - php7.4-mysql
+  register: php_packages_ubuntu_installed
+  notify:
+    - Restart Apache
+- name: Instala pacotes para suporte a PHP no Apache em Distribuições RedHat/CentOS
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.dnf:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - epel-release
+    - httpd
+    - php
+    - php-mysqlnd
+    - policycoreutils-python-utils
+  register: php_packages_centos_installed
+  notify:
+    - Restart Httpd

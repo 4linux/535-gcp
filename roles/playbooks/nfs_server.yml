@@ -1,0 +1,4 @@
+---
+- hosts: lb
+  roles:
+    - nfs_server

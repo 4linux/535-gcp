@@ -1,0 +1,22 @@
+---
+- name: Start Nginx Ubuntu
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Start Nginx CentOS
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+
+- name: Restart Nginx Ubuntu
+  ansible.builtin.service:
+    name: nginx
+    state: restarted
+
+- name: Restart Nginx CentOS
+  ansible.builtin.service:
+    name: nginx
+    state: restarted

@@ -1,0 +1,70 @@
+---
+- name: Define o arquivo de configuracao do servidor Nginx no Debian/Ubuntu
+  when: ansible_os_family == "Debian"
+  ansible.builtin.template:
+    src: nginx-debian.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Nginx Ubuntu
+  tags: balancer
+
+- name: Define o arquivo de configuracao do servidor Nginx no RedHat/CentOS
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.template:
+    src: nginx-redhat.conf.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Nginx CentOS
+  tags: balancer
+
+- name: Liberar a porta 80 no firewall para Nginx
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.firewalld:
+    port: 80/tcp
+    permanent: true
+    state: enabled
+
+- name: Configurar firewall para NFS
+  when: ansible_os_family == "RedHat"
+  firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  with_items:
+    - http
+    - nfs
+    - mountd
+    - rpc-bind
+
+- name: Permitir que o Nginx faça binding na porta padrão (80)
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.command:
+    cmd: setsebool -P httpd_can_network_connect 1
+  tags: balancer
+
+- name: Configurar contexto de segurança do SELinux para diretórios de conteúdo do Nginx
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.command:
+    cmd: semanage fcontext -a -t httpd_sys_content_t "/usr/share/nginx/html(/.*)?"
+  tags: balancer
+
+- name: Restaurar contexto de segurança no diretório de conteúdo
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.command:
+    cmd: restorecon -Rv /usr/share/nginx/html
+  tags: balancer
+
+- name: Garantir que o SELinux está permitindo conexões HTTP
+  when: ansible_os_family == "RedHat"
+  ansible.builtin.seboolean:
+    name: httpd_can_network_connect
+    state: true
+    persistent: true
+  tags: balancer

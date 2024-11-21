@@ -1,0 +1,8 @@
+---
+- hosts: local
+  tasks:
+    - name: Instala pacote ntpdate
+      ansible.builtin.apt:
+        name: ntpdate
+        state: present
+        update_cache: true

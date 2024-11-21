@@ -1,0 +1,4 @@
+---
+packages_redhat:
+  - python3-mysql
+  - mariadb-server

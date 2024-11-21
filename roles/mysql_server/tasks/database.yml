@@ -1,0 +1,41 @@
+---
+- name: Configura senha do usuario root
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  tags: banco
+
+- name: Cria banco de dados dexter500
+  community.mysql.mysql_db:
+    name: dexter500
+    state: present
+  tags: banco
+
+- name: Verifica se as tabelas ja estao importadas no MySQL
+  ansible.builtin.stat:
+    path: /var/lib/mysql/dexter500/funcionarios.ibd
+  register: table_mysql
+
+- name: Importar tabelas para o banco de dados
+  when: not table_mysql.stat.exists
+  community.mysql.mysql_db:
+    name: dexter500
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    target: /tmp/dump.sql
+    state: import
+  tags: banco
+
+- name: Adiciona usuario admin e configura privilegios
+  community.mysql.mysql_user:
+    name: "{{ mysql_user }}"
+    password: "{{ mysql_password }}"
+    host: "{{ item }}"
+    state: present
+    priv: "dexter500.*:ALL"
+  with_items:
+    - "localhost"
+    - "127.0.0.1"
+    - "%"
+  tags: banco

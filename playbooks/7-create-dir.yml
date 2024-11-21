@@ -1,0 +1,11 @@
+---
+- hosts: local
+  tasks:
+    - name: Adicionar estrutura de diretórios através de variável
+      ansible.builtin.file:
+        dest: "{{ diretorios }}"
+        state: directory
+        recurse: yes
+        owner: root
+        group: root
+        mode: "775"

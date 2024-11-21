@@ -1,0 +1,10 @@
+---
+- hosts: local
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Instala pacotes através de variáveis
+      ansible.builtin.apt:
+        name: "{{ pacotes }}"
+        state: present
+        update_cache: true

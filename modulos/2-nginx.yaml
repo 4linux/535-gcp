@@ -1,0 +1,58 @@
+- hosts: balancer-server
+  pre_tasks:
+  - name: Instala dependências
+    ansible.builtin.dnf:
+      name: epel-release
+      state: present
+  tasks:
+  - name: Instala servidor Nginx
+    ansible.builtin.dnf:
+       name:
+         - nginx
+         - policycoreutils-python-utils
+       state: present
+    register: nginx_installed
+    notify:
+      - Start Nginx
+  - name: Define o arquivo de configuracao do servidor Nginx
+    when: nginx_installed is succeeded
+    ansible.builtin.copy:
+      src: files/nginx/nginx.conf
+      dest: /etc/nginx/nginx.conf
+      owner: root
+      group: root
+      mode: "0644"
+    notify:
+      - Restart Nginx
+  - name: Permitir que o Nginx faça binding na porta padrão (80)
+    ansible.builtin.command:
+      cmd: setsebool -P httpd_can_network_connect 1
+
+  - name: Configurar contexto de segurança do SELinux para diretórios de conteúdo do Nginx
+    ansible.builtin.command:
+      cmd: semanage fcontext -a -t httpd_sys_content_t "/usr/share/nginx/html(/.*)?"
+
+  - name: Restaurar contexto de segurança no diretório de conteúdo
+    ansible.builtin.command:
+      cmd: restorecon -Rv /usr/share/nginx/html
+
+  - name: Garantir que o SELinux está permitindo conexões HTTP
+    ansible.builtin.seboolean:
+      name: httpd_can_network_connect
+      state: true
+      persistent: true
+  post_tasks:
+  - name: Testa a instalação
+    ansible.builtin.uri:
+      url: http://10.1.0.12
+
+  handlers:
+   - name: Start Nginx
+     ansible.builtin.service:
+       name: nginx
+       state: started
+       enabled: yes
+   - name: Restart Nginx
+     ansible.builtin.service:
+       name: nginx
+       state: restarted
